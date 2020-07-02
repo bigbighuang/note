@@ -1,0 +1,139 @@
+图元类型(kind of primitives)
+GL_POINTS, 
+GL_LINE_STRIP, GL_LINE_LOOP, GL_LINES, GL_LINE_STRIP_ADJACENCY, GL_LINES_ADJACENCY, 
+GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN, GL_TRIANGLES, GL_TRIANGLE_STRIP_ADJACENCY, GL_TRIANGLES_ADJACENCY GL_PATCHES
+
+
+1.void glDrawArrays(	GLenum mode, // 指定图元类型
+ 	GLint first, // 指定从顶点数据哪开始，偏移值, 第一个顶点数据的位置
+ 	GLsizei count); // 指定渲染的顶点个数，即有多少个
+
+2.void glDrawElements(	GLenum mode, // 图元类型
+ 	GLsizei count, // 渲染的总数
+ 	GLenum type, // 索引中值的类型：GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT, or GL_UNSIGNED_INT.
+ 	const void * indices); // 1.如果有buffer绑定到GL_ELEMENT_ARRAY_BUFFER，那么indices指的是字节偏移，
+                           // 从哪开始读取索引.
+                           // 2.如果没有buffer绑定，indices指的是indeces存储的位置地址
+
+3.void glVertexAttribPointer(	GLuint index, // 指定属性在顶点shader中的位置索引
+ 	GLint size, // 每个属性有多少个分量, 比如position(x,y,z)，有3个
+ 	GLenum type, // 每个分量的数据类型
+ 	GLboolean normalized, // 是否归一化
+ 	GLsizei stride, // 步长，距离下一个同样属性的距离值
+ 	const void * pointer); // 1.如果当前有非空buffer绑定GL_ARRAY_BUFFER，那么pointer是当前属性在缓存中的偏移值；
+                           // 2.没有绑定，pointer是指当前属性缓存的首地址
+ 
+
+4.void glGenBuffers(	GLsizei n, // 指定产生buffer的个数
+ 	GLuint * buffers); // 存储产生buffer的名字(id)
+
+5.void glBindBuffer(	GLenum target, // 指定buffer object绑定到哪一种类型
+ 	GLuint buffer); // glGenBuffers产生的buffer名字
+
+target类型
+-----------------------------------------------------------------------
+Buffer Binding Target	       Purpose
+-----------------------------------------------------------------------
+GL_ARRAY_BUFFER	               Vertex attributes
+GL_ATOMIC_COUNTER_BUFFER	   Atomic counter storage
+GL_COPY_READ_BUFFER	           Buffer copy source
+GL_COPY_WRITE_BUFFER	       Buffer copy destination
+GL_DISPATCH_INDIRECT_BUFFER	   Indirect compute dispatch commands
+GL_DRAW_INDIRECT_BUFFER	       Indirect command arguments
+GL_ELEMENT_ARRAY_BUFFER	       Vertex array indices
+GL_PIXEL_PACK_BUFFER	       Pixel read target
+GL_PIXEL_UNPACK_BUFFER	       Texture data source
+GL_SHADER_STORAGE_BUFFER	   Read-write storage for shaders
+GL_TEXTURE_BUFFER	           Texture data buffer
+GL_TRANSFORM_FEEDBACK_BUFFER   Transform feedback buffer
+GL_UNIFORM_BUFFER	           Uniform block storage
+--------------------------------------------------------------------------
+
+6.void glBufferData(	GLenum target, // target类型，glBindBuffer绑定类型
+ 	GLsizeiptr size,  // 指定字节数，需要多个字节数来存储这个buffer对象
+ 	const void * data,  // 指定一个数据的地址，这块地址的数据将要copy到新的数据对象中用于初始化
+                        // null表示没有数据需要copy
+ 	GLenum usage); // 数据对象的使用模式(usage patter)
+
+使用模式(usage patter)
+GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY, 
+GL_STATIC_DRAW, GL_STATIC_READ, GL_STATIC_COPY, 
+GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, or GL_DYNAMIC_COPY.
+------------------------------------------------------------------------------------
+The frequency of access may be one of these:
+STREAM
+The data store contents will be modified once and used at most a few times.
+
+STATIC
+The data store contents will be modified once and used many times.
+
+DYNAMIC
+The data store contents will be modified repeatedly and used many times.
+-------------------------------------------------------------------------------------
+The nature of access may be one of these:
+
+DRAW
+The data store contents are modified by the application, and used as the source for GL drawing and image specification commands.
+
+READ
+The data store contents are modified by reading data from the GL, and used to return that data when queried by the application.
+
+COPY
+The data store contents are modified by reading data from the GL, and used as the source for GL drawing and image specification commands.
+-------------------------------------------------------------------------------------------------------------
+
+7.void glBufferSubData(	GLenum target, // 缓存绑定的类型
+ 	GLintptr offset, // 偏移值，从这个值开始覆盖
+ 	GLsizeiptr size, // 被覆盖的总数
+ 	const void * data); // 数据地址
+
+
+// FBO的使用
+首先创建一个framebuffer object，bind之后使之成为active framebuffer，然后可以做些操作，最后unbind framebuffer
+
+8.void glGenFramebuffers(	GLsizei n, // 个数
+ 	GLuint *framebuffers); // 存储名字的数组
+
+9.void glBindFramebuffer(	GLenum target, // bind 到一个target上
+ 	GLuint framebuffer); // framebuffer名字
+
+target must be either 
+GL_DRAW_FRAMEBUFFER:用于读操作glReadPixels 
+GL_READ_FRAMEBUFFER:用于渲染，清除、其他的写操作
+GL_FRAMEBUFFER: GL_DRAW_FRAMEBUFFER | GL_READ_FRAMEBUFFER
+
+使用framebuffer必须满足一下条件：
+1.至少attach到一个buffer（color，depth，stencil）
+2.至少一个color attachment
+3.所有的attachment都应该完成
+4.每一块buffer应当有相同数量的samples
+
+// 检查framebuffer完成状态
+10.GLenum glCheckFramebufferStatus(	GLenum target);// bound的target类型
+
+返回值：
+GL_FRAMEBUFFER_COMPLETE is returned if the framebuffer bound to target is complete.
+
+GL_FRAMEBUFFER_UNDEFINED is returned if target is the default framebuffer, but the default framebuffer does not exist.
+
+GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT is returned if any of the framebuffer attachment points are framebuffer incomplete.
+
+GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT is returned if the framebuffer does not have at least one image attached to it.
+
+GL_FRAMEBUFFER_UNSUPPORTED is returned if depth and stencil attachments, if present, are not the same renderbuffer, or if the combination of internal formats of the attached images violates an implementation-dependent set of restrictions.
+
+GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE is returned if the value of GL_RENDERBUFFER_SAMPLES is not the same for all attached renderbuffers or, if the attached images are a mix of renderbuffers and textures, the value of GL_RENDERBUFFER_SAMPLES is not zero.
+
+GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS is returned if any framebuffer attachment is layered, and any populated attachment is not layered, or if all populated color attachments are not from textures of the same target.
+-------------------------------------------------------------------------------------------------------------
+检查OK之后，随后的渲染操作将会渲染到当前绑定的framebuffer中的attachment上
+
+切换到默认的framebuffer上
+glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+用完记得释放framebuffer
+glDeleteFramebuffers(1, &fbo);
+
+attachment：
+attachment是一块内存，作为framebuffer的一块buffer，可以把它认为是一张image。
+创建attachment有两种方式：1.纹理；2.renderbuffer对象；
